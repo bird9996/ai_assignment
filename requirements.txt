@@ -1,0 +1,7 @@
+numpy==1.24.4
+pyqt5==5.15.7
+pillow==9.4.0
+opencv-python-headless==4.5.5.62
+scikit-learn==1.2.0
+tensorflow==2.3.3
+#tensorflow-macos==2.5.0
