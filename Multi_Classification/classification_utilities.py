@@ -3,7 +3,6 @@ import numpy as np
 def display_cm(cm, labels, hide_zeros=False, display_metrics=False):
     """显示带有标签的混淆矩阵
     以及Recall，Precision和F1得分等指标。
-       https://gist.github.com/zachguo/10296432
     """
 
     precision = np.diagonal(cm)/cm.sum(axis=0).astype('float')

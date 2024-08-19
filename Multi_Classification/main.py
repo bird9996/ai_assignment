@@ -131,7 +131,7 @@ class Model(object):
         self.model = keras_Model(inputs=self.base_model.input, outputs=self.predictions)
         # 输出模型各层的参数状况
         self.model.summary()
-        print('模型共有网络层数:' + str(len(self.model.layers)))
+        print('Number of network layers shared by the model:' + str(len(self.model.layers)))
 
     # 进行模型训练的函数，具体的optimizer、loss可以进行不同选择
     # 分类交叉熵损失，常搭配softmax用于多分类问题
@@ -153,7 +153,7 @@ class Model(object):
                                                     y_pred=y_pred_labels)  # shape=(12, 12)
 
         loss, accuracy = self.model.evaluate(self.dataset.X_test, self.dataset.Y_test)
-        print('分类准确率 = %.4f' % accuracy)
+        print('accuracy rate = %.4f' % accuracy)
         display_cm(confusion_matrix, facies_labels, hide_zeros=False)
 
     def save(self, file_path=FILE_PATH):

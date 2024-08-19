@@ -76,14 +76,14 @@ class Ui_MainWindow(object):
         # self.graphicsView.setLineWidth(3) # 设置外线宽度
         # self.graphicsView.setMidLineWidth(5) # 设置中线宽度
 
-        self.pushButton_1.setText(_translate("MainWindow", "打开图片"))
+        self.pushButton_1.setText(_translate("MainWindow", "Open picture"))
         self.pushButton_1.setIcon(QtGui.QIcon("icons/open.svg"))
         self.pushButton_1.setIconSize(QtCore.QSize(40, 40))
         self.pushButton_1.setStyleSheet("QPushButton{background:#16A085;border:none;color:#000000;font-size:15px;}"
                                         "QPushButton:hover{background-color:#008080;}")
         self.pushButton_1.clicked.connect(self.clickOpen)
 
-        self.pushButton_2.setText(_translate("MainWindow", "图像识别"))
+        self.pushButton_2.setText(_translate("MainWindow", "Image recognition"))
         self.pushButton_2.setIcon(QtGui.QIcon("icons/c.svg"))
         self.pushButton_2.setIconSize(QtCore.QSize(40, 40))
         self.pushButton_2.setStyleSheet("QPushButton{background:#9F35FF;border:none;color:#000000;font-size:15px}"
@@ -91,7 +91,7 @@ class Ui_MainWindow(object):
         self.pushButton_2.clicked.connect(self.recognition)
 
 
-        self.pushButton_3.setText(_translate("MainWindow", "退出系统"))
+        self.pushButton_3.setText(_translate("MainWindow", "exit"))
         self.pushButton_3.setIcon(QtGui.QIcon("icons/close_.svg"))
         self.pushButton_3.setIconSize(QtCore.QSize(40, 40))
         self.pushButton_3.setStyleSheet("QPushButton{background:#CE0000;border:none;color:#000000;font-size:15px;}"
@@ -99,7 +99,7 @@ class Ui_MainWindow(object):
         self.pushButton_3.clicked.connect(self.close)
 
 
-        self.label.setText("识别结果")
+        self.label.setText("identify the results")
         self.label.setFrameShape(QtWidgets.QFrame.Box)
         self.label.setMidLineWidth(5)
         font = QtGui.QFont()
@@ -114,13 +114,13 @@ class Ui_MainWindow(object):
         self.messageBox.setStyleSheet("QMessageBox{background-color:#CE0000;border:none;color:#000000;font-size:15px;}")
 
     def close(self):
-        reply = self.messageBox.question(None, "Quit", "确定要关闭该程序？", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        reply = self.messageBox.question(None, "Quit", "Are you sure you want to close this program？", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
             sys.exit()
 
     def clickOpen(self):
         global imgName
-        imgName, imgType = QFileDialog.getOpenFileName(None, "打开图片", "", "*.jpg;;*.png;;*.jpeg;;All Files(*)")
+        imgName, imgType = QFileDialog.getOpenFileName(None, "Open picture", "", "*.jpg;;*.png;;*.jpeg;;All Files(*)")
         self.ifile = imgName
         img = cv2.imread(imgName)
         img1 = cv2.resize(img, (350, 550))
@@ -160,6 +160,6 @@ if __name__ == '__main__':
     MainWindow = QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
-    MainWindow.setWindowTitle("图像识别系统")
+    MainWindow.setWindowTitle("image recognition system")
     MainWindow.show()
     sys.exit(app.exec_())
