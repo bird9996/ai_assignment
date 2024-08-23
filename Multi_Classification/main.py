@@ -1,22 +1,24 @@
 # coding= utf-8
-import os #用于读取文件路径
-import numpy as np #用于数值操作
-import cv2 # 用于图像处理
-from tensorflow.python.keras.utils.np_utils import to_categorical # 将labels转成二进制形式
-from tensorflow.python.keras.models import load_model # 加载模型
+import os  # 用于读取文件路径
+import numpy as np  # 用于数值操作
+import cv2  # 用于图像处理
+from tensorflow.python.keras.utils.np_utils import to_categorical  # 将labels转成二进制形式
+from tensorflow.python.keras.models import load_model  # 加载模型
 from classification_utilities import display_cm  # 用于给混淆矩阵加标签
-from sklearn.model_selection import train_test_split #用于数据集的划分
+from sklearn.model_selection import train_test_split  # 用于数据集的划分
 from tensorflow.python.keras.applications.resnet import ResNet152
 from tensorflow.python.keras.applications.vgg19 import VGG19
 from tensorflow.python.keras.applications.densenet import DenseNet201
-from tensorflow.python.keras.layers import Dense,GlobalAveragePooling2D
+from tensorflow.python.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.python.keras.models import Model as keras_Model
 from tensorflow.python.keras.callbacks import TensorBoard
 from classification_utilities import display_cm
 import sklearn.metrics as metrics
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pickle
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
-
 
 
 def endwith(s, *endstring):
@@ -109,7 +111,6 @@ class DataSet(object):
 
 class Model(object):
     FILE_PATH = r"./model/model.h5"
-    # FILE_PATH = r"/Users/bird/PycharmProjects/lsbfgroupwork/model"
 
     def __init__(self):
         self.model = None
@@ -135,11 +136,53 @@ class Model(object):
 
     # 进行模型训练的函数，具体的optimizer、loss可以进行不同选择
     # 分类交叉熵损失，常搭配softmax用于多分类问题
-    def train_model(self):
-        self.model.compile(optimizer='Adamax',loss='categorical_crossentropy',metrics=['accuracy'])
+    # def train_model(self):
+    #     self.model.compile(optimizer='Adamax',loss='categorical_crossentropy',metrics=['accuracy'])
+    #
+    #     self.model.fit(self.dataset.X_train, self.dataset.Y_train, epochs=6, batch_size=20,
+    #                    callbacks=[TensorBoard(log_dir='./log')]) # 使用tensorboard输出训练日志
 
-        self.model.fit(self.dataset.X_train, self.dataset.Y_train, epochs=6, batch_size=20,
-                       callbacks=[TensorBoard(log_dir='./log')]) # 使用tensorboard输出训练日志
+    def train_model(self):
+        # 编译模型
+        self.model.compile(optimizer='Adamax', loss='categorical_crossentropy', metrics=['accuracy'])
+
+        # 使用 TensorBoard 回调记录训练日志
+        tensorboard_callback = TensorBoard(log_dir='./log', histogram_freq=1)
+
+        # 训练模型
+        history = self.model.fit(self.dataset.X_train, self.dataset.Y_train, epochs=6, batch_size=20,
+                                 callbacks=[tensorboard_callback],validation_data=(self.dataset.X_test, self.dataset.Y_test))
+
+        with open('training_history.pkl', 'wb') as file:
+            pickle.dump(history.history, file)
+        # 绘制训练曲线并保存
+        self.plot_training_curves(history, 'training_curves.png')
+
+
+
+    def plot_training_curves(self, history, filename):
+        # 提取训练和验证准确率
+        train_accuracy = history.history['accuracy']
+        val_accuracy = history.history.get('val_accuracy', [])
+
+        epochs = range(1, len(train_accuracy) + 1)
+
+        # 绘制准确率曲线
+        plt.figure(figsize=(8, 6))
+
+        plt.plot(epochs, train_accuracy, 'bo-', label='Training Accuracy')
+        if val_accuracy:
+            plt.plot(epochs, val_accuracy, 'ro-', label='Validation Accuracy')
+
+        plt.xlabel('Epochs')
+        plt.ylabel('Accuracy')
+        plt.title('Training and Validation Accuracy')
+        plt.legend()
+
+        # 保存图像
+        plt.tight_layout()
+        plt.savefig(filename)
+        plt.close()
 
     def evaluate_model(self):
         print('\nTesting---------------')
@@ -147,14 +190,37 @@ class Model(object):
         facies_labels = read_name_list()
 
         y_pred_one = self.model.predict(self.dataset.X_test)  # shape=(n_samples, 10)
-        y_pred_labels = np.argmax(y_pred_one,axis=1)  # only necessary if output has one-hot-encoding, shape=(n_samples)
+        y_pred_labels = np.argmax(y_pred_one,
+                                  axis=1)  # only necessary if output has one-hot-encoding, shape=(n_samples)
 
         confusion_matrix = metrics.confusion_matrix(y_true=np.argmax(self.dataset.Y_test, axis=1),
                                                     y_pred=y_pred_labels)  # shape=(12, 12)
 
         loss, accuracy = self.model.evaluate(self.dataset.X_test, self.dataset.Y_test)
         print('accuracy rate = %.4f' % accuracy)
-        display_cm(confusion_matrix, facies_labels, hide_zeros=False)
+        # 使用定义的函数绘制和保存混淆矩阵
+        self.plot_and_save_confusion_matrix(confusion_matrix, facies_labels, 'val_confusion_matrix.png')
+
+        y_pred_one_train = self.model.predict(self.dataset.X_train)  # shape=(n_samples, 10)
+        y_pred_labels_train = np.argmax(y_pred_one_train,
+                              axis=1)  # only necessary if output has one-hot-encoding, shape=(n_samples)
+        confusion_matrix = metrics.confusion_matrix(y_true=np.argmax(self.dataset.Y_train, axis=1),
+                                                y_pred=y_pred_labels_train)  # shape=(12, 12)
+        self.plot_and_save_confusion_matrix(confusion_matrix, facies_labels, 'confusion_matrix.png')
+
+
+        # display_cm(confusion_matrix, facies_labels, hide_zeros=False)
+
+    def plot_and_save_confusion_matrix(self, cm, labels, filename):
+        plt.figure(figsize=(10, 8))
+
+        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+                    xticklabels=labels, yticklabels=labels)
+        plt.xlabel('Predicted Labels')
+        plt.ylabel('True Labels')
+        plt.title('Confusion Matrix')
+        plt.savefig(filename)
+        plt.close()
 
     def save(self, file_path=FILE_PATH):
         self.model.save(file_path)
@@ -176,6 +242,3 @@ if __name__ == '__main__':
     model.load()
     # model.save()
     model.evaluate_model()
-
-
-
